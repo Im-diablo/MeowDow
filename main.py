@@ -91,6 +91,30 @@ async def ping(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thing_to_say: str, to: discord.Member): 
     await interaction.response.send_message(f"{interaction.user.mention} said: '{thing_to_say}' to {to.mention}")
 
+@bot.tree.command(name="meow")
+async def meow(interaction: discord.Interaction):
+    await interaction.response.send_message(f"meow😼 {interaction.user.mention}!", ephemeral=True)
+
+@bot.tree.command(name="catfact")
+async def catfact(interaction: discord.Interaction):
+    try:
+        response = requests.get("https://catfact.ninja/fact")
+        cat_fact = response.json()["fact"]
+        await interaction.response.send_message(cat_fact)
+    except Exception as e:
+        print(f"Error fetching cat image: {e}")
+        await interaction.response.send_message("Sorry, I could not fetch a cat fact at this time.")
+
+@bot.tree.command(name="nekopic")
+async def necopic(interaction: discord.Interaction):
+    try:
+        response = requests.get("https://api.thecatapi.com/v1/images/search")
+        cat_image_url = response.json()[0]["url"]
+        await interaction.response.send_message(cat_image_url)
+    except Exception as e:
+        print(f"Error fetching cat image: {e}")
+        await interaction.response.send_message("Sorry, I could not fetch a cat image at this time.")
+
 
 url = 'https://drive.google.com/u/0/uc?id=1F3ZGuaKN4ugYe_K1k9jLpAndTrNUvyWs'
 output = 'token.txt'
