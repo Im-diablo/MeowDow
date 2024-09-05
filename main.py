@@ -1,6 +1,5 @@
 import discord # type: ignore
 from discord import app_commands
-from discord.ext import commands
 from discord.ext import commands, tasks # type: ignore
 from collections import defaultdict
 import requests #type:ignore
@@ -31,28 +30,6 @@ async def on_ready():
 async def on_message(message):
     if message.author == bot.user:
         return
-    
-    if message.content == "!meow":
-        await message.channel.send("Meow! ")
-
-    if message.content == "!catfact":
-        try:
-            response = requests.get("https://catfact.ninja/fact")
-            cat_fact = response.json()["fact"]
-            await message.channel.send(cat_fact)
-        except Exception as e:
-            print(f"Error fetching cat fact: {e}")
-            await message.channel.send("Sorry, I could not fetch a fact at this time.")
-
-    if message.content == "!nekopic":
-        try:
-            response = requests.get("https://api.thecatapi.com/v1/images/search")
-            cat_image_url = response.json()[0]["url"]
-            await message.channel.send(cat_image_url)
-        except Exception as e:
-            print(f"Error fetching cat image: {e}")
-            await message.channel.send("Sorry, I could not fetch a cat image at this time.")
-
     # Check for bad words
     if any(word in message.content.lower() for word in bad_words):
         await message.delete()
@@ -80,6 +57,32 @@ async def on_message(message):
 async def level_up():
     for user_id in user_xp:
         user_xp[user_id] += 1
+
+        # Commands
+@bot.command()
+async def meow(ctx):
+    await ctx.send("Meow! ")
+
+@bot.command()
+async def catfact(ctx):
+    try:
+        response = requests.get("https://catfact.ninja/fact")
+        cat_fact = response.json().get("fact", "No fact available")
+        await ctx.send(cat_fact)
+    except Exception as e:
+        print(f"Error fetching cat fact: {e}")
+        await ctx.send("Sorry, I could not fetch a fact at this time.")
+
+@bot.command()
+async def nekopic(ctx):
+    try:
+        response = requests.get("https://api.thecatapi.com/v1/images/search")
+        cat_image_url = response.json()[0].get("url", "No image available")
+        await ctx.send(cat_image_url)
+    except Exception as e:
+        print(f"Error fetching cat image: {e}")
+        await ctx.send("Sorry, I could not fetch a cat image at this time.")
+
 
 @bot.command()
 async def mute(ctx, member: discord.Member, *, reason=None):
@@ -112,7 +115,7 @@ async def ping(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thing_to_say: str, to: discord.Member): 
     await interaction.response.send_message(f"{interaction.user.mention} said: '{thing_to_say}' to {to.mention}")
 
-url = 'https://drive.google.com/u/0/uc?id=1F3ZGuaKN4ugYe_K1k9jLpAndTrNUvyWs'
+url = 'https://drive.google.com/u/0/uc?id=1-IlWaujV4qkIJPxrOitYiV7f3T8-bMWU'
 output = 'token.txt'
 gdown.download(url, output, quiet=False)
 
