@@ -232,17 +232,13 @@ spam_detector = SpamDetector()
 
 @Bot.event
 async def on_message(message):
-    print(f"Message received: {message.content}")  # Debug print
     if message.author == Bot.user:
         return
 
-    if bad_words_filter_enabled:
-        print(f"Checking message: {message.content}")  # Debug print
-        if contains_bad_word(message.content):
-            print("Bad word detected!")  # Debug print
-            await message.delete()
-            await message.channel.send(f"{message.author.mention}, please watch your language!")
-            return
+    if bad_words_filter_enabled and contains_bad_word(message.content):
+        await message.delete()
+        await message.channel.send(f"{message.author.mention}, please watch your language!")
+        return
 
     await Bot.process_commands(message)
 
