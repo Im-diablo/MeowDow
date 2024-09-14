@@ -1,4 +1,13 @@
-gdown
 discord
+gdown
 gunicorn
+ffmpeg-python
+yt_dlp
+youtube-search-python
+async-timeout
+spotipy
+psutil
+better-profanity
+async-timeout
+PyNaCl
 flask
