@@ -28,7 +28,7 @@ from youtubesearchpython import VideosSearch
 
 """ ===============================================  TOKEN FOR BOT ================================================================= """
 
-url = 'https://drive.google.com/u/0/uc?id=1-IlWaujV4qkIJPxrOitYiV7f3T8-bMWU'
+url = 'https://drive.google.com/u/0/uc?id=1Bwe3m0WXdufR5sUBR7TSACFjIj2YLrBP'
 output = 'token.txt'
 gdown.download(url, output, quiet=False)
 with open('token.txt') as f:
@@ -79,7 +79,7 @@ async def sync(ctx):
     synced = await Bot.tree.sync()
     await ctx.send(f"Synced {len(synced)} commands.")
 
-""" =============================================== ON READY ================================================================  """
+""" ========================================== ON READY and ON MESSAGE ========================================================  """
 
 @Bot.event
 async def on_ready():
@@ -90,7 +90,21 @@ async def on_ready():
     await Bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="HER"))
     #await Bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="over YOU"))
     #await Bot.change_presence(activity=discord.Streaming(name="my development", url="https://www.twitch.tv/yourchannelhere"))
+@Bot.event
+async def on_message(message):
+    if message.author == Bot.user:
+        return
 
+    is_spam = await spam_detector.check_spam(message)
+    if is_spam:
+        return
+        
+    if bad_words_filter_enabled and contains_bad_word(message.content):
+        await message.delete()
+        await message.channel.send(f"{message.author.mention}, please watch your language!")
+        return
+
+    await Bot.process_commands(message)
 
 ''' =============================================== PING ================================================================='''
 
@@ -157,19 +171,6 @@ async def toggle_filter(interaction: discord.Interaction):
     status = "enabled" if bad_words_filter_enabled else "disabled"
     await interaction.response.send_message(f"Bad words filter has been {status}.", ephemeral=True)
 
-@Bot.event
-async def on_message(message):
-    if message.author == Bot.user:
-        return
-
-    if bad_words_filter_enabled and contains_bad_word(message.content):
-        await message.delete()
-        await message.channel.send(f"{message.author.mention}, please watch your language!")
-        return
-
-    await Bot.process_commands(message)
-
-
 
 """ ===========================================  SPAM DETECTION  ============================================================== """
 
@@ -182,7 +183,7 @@ class SpamDetector:
         self.user_messages = defaultdict(list)
         self.THRESHOLD = 5
         self.TIME_WINDOW = 5  # seconds
-        self.TIMEOUT_DURATION = 60  # seconds
+        self.MUTE_DURATION = 60  # seconds (1 minute)
 
     async def check_spam(self, message):
         user_id = message.author.id
@@ -198,11 +199,11 @@ class SpamDetector:
 
         if self.message_count[user_id] > self.THRESHOLD:
             if user_id not in self.muted_users:
-                await self.timeout_user(message)
+                await self.mute_user(message)
             return True
         return False
 
-    async def timeout_user(self, message):
+    async def mute_user(self, message):
         user_id = message.author.id
         self.muted_users.add(user_id)
         
@@ -214,35 +215,29 @@ class SpamDetector:
                 except discord.errors.NotFound:
                     pass  # Message already deleted
 
-            # Timeout the user
-            await message.author.timeout(discord.utils.utcnow() + datetime.timedelta(seconds=self.TIMEOUT_DURATION), reason="Spamming")
-            await message.channel.send(f"{message.author.mention} has been timed out for {self.TIMEOUT_DURATION} seconds due to spamming.")
+            # Mute the user
+            muted_role = discord.utils.get(message.guild.roles, name="Muted")
+            if not muted_role:
+                muted_role = await message.guild.create_role(name="Muted")
+                for channel in message.guild.channels:
+                    await channel.set_permissions(muted_role, send_messages=False, add_reactions=False)
 
-            # Wait for the timeout duration
-            await asyncio.sleep(self.TIMEOUT_DURATION)
+            await message.author.add_roles(muted_role)
+            await message.channel.send(f"{message.author.mention} has been muted for {self.MUTE_DURATION} seconds due to spamming.")
 
-            # Remove the timeout
-            await message.author.timeout(None, reason="Timeout duration expired")
+            # Wait for the mute duration
+            await asyncio.sleep(self.MUTE_DURATION)
+
+            # Unmute the user
+            await message.author.remove_roles(muted_role)
             self.muted_users.remove(user_id)
-            await message.channel.send(f"{message.author.mention}'s timeout has been lifted.")
+            await message.channel.send(f"{message.author.mention}'s mute has been lifted.")
         except discord.errors.Forbidden:
-            await message.channel.send("I don't have permission to timeout users or delete messages.")
+            await message.channel.send("I don't have permission to mute users or delete messages.")
 
 spam_detector = SpamDetector()
 
-@Bot.event
-async def on_message(message):
-    if message.author == Bot.user:
-        return
-
-    if bad_words_filter_enabled and contains_bad_word(message.content):
-        await message.delete()
-        await message.channel.send(f"{message.author.mention}, please watch your language!")
-        return
-
-    await Bot.process_commands(message)
-
-        
+      
 """============================================  MUTE AND UNMUTE ============================================================="""
 
 @Bot.event
@@ -634,13 +629,13 @@ ytdl_format_options = {
     'source_address': '0.0.0.0',
     'force-ipv4': True,
     'preferredcodec': 'mp3',
-    'buffersize': 256*1024,
+    'buffersize': 96*1024,
 }
 
 '''ffmpeg OPTIONS'''
 ffmpeg_options = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -bufsize 256k'  
+    'options': '-vn -bufsize 96k'  
 }
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
