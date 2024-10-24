@@ -87,9 +87,10 @@ async def on_ready():
     await Bot.tree.sync()
     print('Command tree synced')
     #await Bot.change_presence(activity=discord.Game(name="Hanging out in Harmony"))
-    await Bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="HER"))
-    #await Bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="over YOU"))
-    #await Bot.change_presence(activity=discord.Streaming(name="my development", url="https://www.twitch.tv/yourchannelhere"))
+    #await Bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="HER"))
+    #await Bot.change_presence(activity=discord.Streaming(name="my development", url=""))
+    await Bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="over YOU"))
+
 @Bot.event
 async def on_message(message):
     if message.author == Bot.user:
